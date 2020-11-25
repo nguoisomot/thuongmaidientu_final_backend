@@ -6,7 +6,9 @@ const app = express();
 
 //Link connect font-end
 var corsOptions = {
-  origin: "http://localhost:8000"
+  origin1: "http://localhost:8000",
+  origin2: "http://localhost:3000",
+
 }
 app.use(cors(corsOptions))
 
@@ -34,6 +36,7 @@ db.mongoose
   
 
 require('./app/routers/shop.router')(app);
+require('./app/routers/user.router')(app);
 app.listen(3001, () => {
   console.log("Server is running on port 3001")
 })

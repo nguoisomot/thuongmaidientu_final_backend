@@ -1,8 +1,9 @@
-const e = require("express");
 const db = require("../models");
 const Shop = db.shop;
 const SanPham = db.sanPham;
 const GioHang = db.gioHang;
+const DonHang = db.donHang;
+const User = db.user;
 
 exports.createShop = (req, res) => {
   // Validate request
@@ -37,6 +38,21 @@ exports.createShop = (req, res) => {
       });
     });
 };
+// get id_shop
+exports.getIdShop = async (req,res)=>{
+  SanPham.findOne({_id:req.body.id_san_pham},function(err,result){
+    if(err){
+      return res.status(400).send({
+        data: "Không tìm thấy dữ liệu"
+      })
+    }
+    else{
+      return res.status(200).send({
+        data:result.id_shop
+      })
+    }
+  })
+}
 exports.login = async (req, res) => {
   Shop.findOne({ email: req.body.email }).exec(function (err, result) {
     if (!result) {
@@ -128,6 +144,90 @@ exports.deleteItem = (req,res)=>{
       res.send("Err delete")
     }else{
       res.send(result)
+    }
+  })
+}
+
+// update san pham sau khi mua hang
+exports.updateSoLuongSanPhamAfterBuy = async (req, res) => {
+  // filer by _id of item 
+  console.log('okay')
+  let filter = {
+    _id: req.body.id_san_pham,
+  }
+  SanPham.findOne(filter).exec(async function (err, result) {
+    console.log('okay')
+
+    if (result) {
+      let new_so_luong = result.so_luong - req.body.so_luong;
+      let update = {
+        so_luong: new_so_luong
+      }
+
+      let doc = await SanPham.findOneAndUpdate(filter, update, {
+        new: true
+      })
+      res.send(doc)
+      return
+    }
+    if (err) {
+      res.send('Error')
+    }
+  });
+  // res.json(doc)
+};
+// add to cart
+exports.addToCart = (req, res) => {
+  const gioHang = new GioHang({
+    id_user: req.body.id_user,
+    id_san_pham: req.body.id_san_pham,
+    id_shop:req.body.id_shop,
+    so_luong: req.body.so_luong,
+    gia:req.body.gia,
+    ten_san_pham:req.body.ten_san_pham,
+    hinh_anh:req.body.hinh_anh,
+  })
+
+  let filterCart = {
+    id_user: req.body.id_user,
+    id_san_pham: req.body.id_san_pham
+  }
+
+  GioHang.findOne(filterCart).exec(async function (err, results) {
+    if (results) {
+      let new_so_luong = parseInt(results.so_luong) + parseInt(req.body.so_luong);
+      console.log(new_so_luong)
+      let update = {
+        so_luong: new_so_luong
+      };
+      console.log(results.update)
+      let doc = await GioHang.findOneAndUpdate(filterCart, update, {
+        new: true
+      });
+      res.status(200).send(doc)
+    } else {
+      gioHang.save(gioHang).then(data => {
+        res.status(200).send(data)
+      }).catch(err => {
+        res.status(500).send(err)
+      })
+    }
+    if (err) {
+      res.status(500).send(err)
+    }
+  })
+}
+// get all items order
+exports.getAllItemsOrder = async (req, res) => {
+  await DonHang.find({}).populate('id_user').exec(function (err, result) {
+    if (err) {
+      return res.status(400).send({
+        data: err
+      })
+    } else {
+      return res.status(200).send({
+        data: result
+      })
     }
   })
 }

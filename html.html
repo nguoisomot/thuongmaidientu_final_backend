@@ -6,6 +6,19 @@
   <title>Document</title>
 </head>
 <body>
-  <img src="./app/public/fc9fa64f-84c6-42de-84df-ba632ba1890a-118371922_3169676333117835_3293990676472430342_n.png">
+  <img src="./app/public/1cb3bf66-1a00-46f4-8fe3-5b0178daff29-vsmartjoy3_1.jfif">
+
+  <p>Click the button to display todays day of the week.</p>
+  
+  <button onclick="myFunction()">Try it</button>
+  
+  <p id="demo"></p>
 </body>
+<script>
+  function myFunction() {
+    var d = new Date();
+    console.log(d.setDate(d.getDay() - 10))
+  }
+</script>
+
 </html> 
