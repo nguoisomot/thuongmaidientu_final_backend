@@ -1,3 +1,4 @@
+const { ObjectId } = require("mongodb");
 const db = require("../models");
 const Shop = db.shop;
 const SanPham = db.sanPham;
@@ -39,16 +40,16 @@ exports.createShop = (req, res) => {
     });
 };
 // get id_shop
-exports.getIdShop = async (req,res)=>{
-  SanPham.findOne({_id:req.body.id_san_pham},function(err,result){
-    if(err){
+exports.getIdShop = async (req, res) => {
+  SanPham.findOne({ _id: req.body.id_san_pham }, function (err, result) {
+    if (err) {
       return res.status(400).send({
         data: "Không tìm thấy dữ liệu"
       })
     }
-    else{
+    else {
       return res.status(200).send({
-        data:result.id_shop
+        data: result.id_shop
       })
     }
   })
@@ -110,11 +111,11 @@ exports.updateItem = (req, res) => {
     //reqFiles.push(url + '/public/' + req.files[i].filename)
     reqFilesUpdate.push(req.files[i].filename)
   }
-  SanPham.findByIdAndUpdate({ _id:id_san_pham }, { ten_san_pham: ten_san_pham, nganh_hang: nganh_hang,id_shop:id_shop, gia: gia, so_luong: so_luong, hinh_anh: reqFilesUpdate},function(err,result){
-    if(err){
-      res.send("err")  
+  SanPham.findByIdAndUpdate({ _id: id_san_pham }, { ten_san_pham: ten_san_pham, nganh_hang: nganh_hang, id_shop: id_shop, gia: gia, so_luong: so_luong, hinh_anh: reqFilesUpdate }, function (err, result) {
+    if (err) {
+      res.send("err")
     }
-    else{
+    else {
       res.send(result)
     }
   })
@@ -137,12 +138,12 @@ exports.getAllData = (req, res) => {
 }
 
 // delete Item SP
-exports.deleteItem = (req,res)=>{
+exports.deleteItem = (req, res) => {
   let id_san_pham = req.body.id_san_pham
-  SanPham.findOneAndDelete({_id:id_san_pham}, function(err,result){
-    if(err){
+  SanPham.findOneAndDelete({ _id: id_san_pham }, function (err, result) {
+    if (err) {
       res.send("Err delete")
-    }else{
+    } else {
       res.send(result)
     }
   })
@@ -181,11 +182,11 @@ exports.addToCart = (req, res) => {
   const gioHang = new GioHang({
     id_user: req.body.id_user,
     id_san_pham: req.body.id_san_pham,
-    id_shop:req.body.id_shop,
+    id_shop: req.body.id_shop,
     so_luong: req.body.so_luong,
-    gia:req.body.gia,
-    ten_san_pham:req.body.ten_san_pham,
-    hinh_anh:req.body.hinh_anh,
+    gia: req.body.gia,
+    ten_san_pham: req.body.ten_san_pham,
+    hinh_anh: req.body.hinh_anh,
   })
 
   let filterCart = {
@@ -226,6 +227,202 @@ exports.getAllItemsOrder = async (req, res) => {
       })
     } else {
       return res.status(200).send({
+        data: result
+      })
+    }
+  })
+}
+// thong ke
+
+exports.thongKeTheoNam1 = async (req, res) => {
+  await DonHang.aggregate(
+    [
+      {
+        //   $project: {
+        //      date: { $dateToString: { format: "%Y-%m-%d", date: "$date" } }
+        //   }
+        // },
+        // {
+        $group: {
+          // ==== truy vấn 2 điều kiện năm và id_san_pham ====
+          _id: { year: { "$year": { "$toDate": "$date" } }, id_san_pham: "$id_san_pham" },
+          TotalAmount: { $sum: "$so_luong" },
+
+
+
+          // TotalPrice: { $sum:"$gia"},
+          // TotalAmount: { $sum:"$so_luong"  },
+
+          //==== query 2 ======
+          /* truy vẫn đếm số lượng sản phẩm bán trong ngày  */
+          // _id: { "date": "$date", "id_san_pham": "$id_san_pham" },
+          // Count: { $sum:"$so_luong"  },
+        }
+      }
+    ]
+    ,
+    function (err, result) {
+      if (err) {
+        console.log(err)
+        res.send({ err })
+      } else {
+        console.log(result)
+        return res.send({
+          data: result
+        })
+      }
+    }
+  )
+}
+
+exports.thongKeTheoNgay = async (req, res) => {
+  await DonHang.aggregate([
+    {
+      '$match': {
+        "id_shop": ObjectId(req.body.id_shop),
+        "date": {
+          '$gte': new Date("" + req.body.date1),
+          '$lt': new Date("" + req.body.date2)
+        }
+      }
+    },
+    {
+      $group: {
+        _id: {
+          //  "date": "$date",
+          id_shop: "$id_shop"
+        },
+        count: { $sum: "$gia" }
+      }
+    }
+  ], function (err, result) {
+    if (err) {
+      console.log(err)
+      res.send({ err })
+    } else {
+      console.log(result)
+      return res.send({
+        data: result
+      })
+    }
+  })
+}
+exports.thongKeTheoThang = async (req, res) => {
+  await DonHang.aggregate([
+    {
+      '$match': {
+        "id_shop": ObjectId(req.body.id_shop),
+        "date": {
+          '$gte': new Date(req.body.month+"-01"),
+          '$lt': new Date(req.body.month+"-31"),
+          // '$gte': new Date("2020-11-01"),
+          // '$lt': new Date("2020-11-31"),
+        }
+      }
+    },
+    {
+      $group: {
+        _id: {
+          //  "date": "$date",
+          "month": { "$month": { "$toDate": "$date" } },
+          "id_shop": "$id_shop"
+        },
+        count: { $sum: "$gia" }
+      }
+    }
+  ], function (err, result) {
+    if (err) {
+      console.log(err)
+      res.send({ err })
+    } else {
+      console.log(result)
+      return res.send({
+        data: result
+      })
+    }
+  })
+}
+exports.thongKeTheoNam = async (req, res) => {
+  await DonHang.aggregate([
+    {
+      '$match': {
+        "id_shop": ObjectId(req.body.id_shop),
+        "date": {
+          '$gte': new Date(req.body.year + "-01-01"),
+          '$lt': new Date(req.body.year + "-12-31")
+        }
+      }
+    },
+
+    {
+      $group: {
+        _id: {
+          //  "date": "$date",
+          "month": { "$month": { "$toDate": "$date" } },
+          "id_shop": "$id_shop"
+        },
+        count: { $sum: "$gia" }
+      }
+    }
+  ], function (err, result) {
+    if (err) {
+      console.log(err)
+      res.send({ err })
+    } else {
+      console.log(result)
+      return res.send({
+        data: result
+      })
+    }
+  })
+};
+
+exports.thongKeTheoQuaCacThang = async (req, res) => {
+  await DonHang.aggregate([
+    // {
+    //   $project: {
+    //     "id_shop": ObjectId("5fbc71be3e55bf4100159089"),
+    //     "date": {
+          // '$gte': new Date("2020" + "-01-01"),
+          // '$lt': new Date("2020" + "-12-31")
+    //     }
+    //   }
+    // },
+    {
+      '$match': {
+        "id_shop": ObjectId(req.body.id_shop),
+        "date": {
+          '$gte': new Date("2020-01-01"),
+          '$lt': new Date("2020-12-31")
+        }
+      }
+    },
+    // { $project: { _id: 0, year: { $year: "$date" }, month: { $month: "$date" },gia:"$gia" } },
+
+    { 
+      $group:
+       { 
+         "_id":{
+        month:{"$month": { "$toDate": "$date"} },
+        
+        // year:{"$year": { "$toDate": "$date"} }
+      },
+        // months: { $push: "$month" } ,
+      
+        Total: { $sum: "$gia" }
+       },
+      }
+
+    // { $group: { "_id": null, years: { $push: "$year" },
+    //   month: { $push: "$month" }, gia: { $push: "$gia" },count:{$sum:"$gia"}  }}
+
+  ], function (err, result) {
+    if (err) {
+      console.log(err)
+      res.send({ err })
+    } else {
+      console.log(result)
+      return res.send({
         data: result
       })
     }

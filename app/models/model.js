@@ -70,7 +70,8 @@ DonHang = mongoose =>{
     so_luong:{type:Number},
     gia:{type:Number},
     ten_san_pham:{type:String},
-    hinh_anh:{type:String}
+    hinh_anh:{type:String},
+    date: { type: Date ,default: Date.now},
   },{
     collection:'DonHang'
   });

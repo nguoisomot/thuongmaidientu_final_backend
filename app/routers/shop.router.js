@@ -21,5 +21,9 @@ module.exports = app => {
   app.post("/addToCart", shop.addToCart)
   app.post("/getAllItemsOrder", shop.getAllItemsOrder)
   app.post("/getIdShop", shop.getIdShop)
+  app.post("/thongKeTheoNam", shop.thongKeTheoNam)
+  app.post("/thongKeTheoThang", shop.thongKeTheoThang)
+  app.post("/thongKeTheoNgay", shop.thongKeTheoNgay)
+  app.post("/thongKeTheoQuaCacThang", shop.thongKeTheoQuaCacThang)
   
 }
