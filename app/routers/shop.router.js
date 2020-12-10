@@ -11,33 +11,35 @@ module.exports = app => {
     );
     next();
   });
-  // app.post("/register",middleware.checkEmail, shop.createShop);
-  // app.post("/login", shop.login);
-  // app.post("/getAllData", shop.getAllData);
-  // app.post("/add", uploadImage.array('hinh_anh',6), shop.add)
-  // app.post("/updateItem", uploadImage.array('hinh_anh',6), shop.updateItem)
-  // app.post("/deleteItem", uploadImage.array('hinh_anh',6), shop.deleteItem)
-
-  // client
-  // app.post("/updateSoLuongSanPhamAfterBuy",  shop.updateSoLuongSanPhamAfterBuy)
-  // app.post("/addToCart", shop.addToCart)
-  // app.post("/getAllItemsOrder", shop.getAllItemsOrder)
-  // app.post("/getIdShop", shop.getIdShop)
-  // app.post("/thongKeTheoNam", shop.thongKeTheoNam)
-  // app.post("/thongKeTheoThang", shop.thongKeTheoThang)
-  // app.post("/thongKeTheoNgay", shop.thongKeTheoNgay)
-  // app.post("/thongKeTheoQuaCacThang", shop.thongKeTheoQuaCacThang)
-  // app.post("/thongKeTheoCacNgayTrongThang", shop.thongKeTheoCacNgayTrongThang)
-  // app.post("/sanPhamBanChayHomNay", shop.sanPhamBanChayHomNay)
-  // app.post("/sanPhamBanChayThangNay", shop.sanPhamBanChayThangNay)
-  // app.post("/sanPhamBanChayTuDauNamDenNay", shop.sanPhamBanChayTuDauNamDenNay)
-  // app.post("/sanPhamBanChayCacThangTrongNam", shop.sanPhamBanChayCacThangTrongNam)
-  // app.post("/sanPhamBanChayCacNgayTrongThang", shop.sanPhamBanChayCacNgayTrongThang)
-
   app.post("/registerShop",shop.registerShop);
   app.post("/loginShop", shop.loginShop);
 
   app.post("/themSanPham", uploadImage.array('hinh_anh',6), shop.themSanPham)
   app.post("/capNhatSanPham", uploadImage.array('hinh_anh', 6), shop.capNhatSanPham)
-  app.post("/xoaSanPham", uploadImage.array('hinh_anh', 6), shop.xoaSanPham)
+  app.post("/xoaSanPham", uploadImage.array('hinh_anh', 6), shop.xoaSanPham);
+  app.get("/sanPhamShop", shop.sanPhamShop);
+  app.post("/tatCaSanPham", shop.tatCaSanPham);
+  app.post("/xacNhanDonHang", shop.xacNhanDonHang);
+  app.post("/xacNhanDangGiaoHang", shop.xacNhanDangGiaoHang);
+  app.post("/xacNhanThanhToanDonHang", shop.xacNhanThanhToanDonHang);
+  app.post("/huyDonHang", shop.huyDonHang);
+  app.post("/danhSachSanPhamChoXacNhan", shop.danhSachSanPhamChoXacNhan);
+  app.post("/donHangUser", shop.donHangUser);
+  app.post("/uploadImage", shop.uploadImage);
+
+  app.post("/uploadMultipleImage",uploadImage.array('hinh_anh', 6), shop.uploadMultipleImage);
+
+
+  app.post("/thongKeDoanhThuTheoCacThangTrongNam", shop.thongKeDoanhThuTheoCacThangTrongNam)
+  app.post("/thongKeTheoCacNgayTrongThang", shop.thongKeTheoCacNgayTrongThang)
+
+  app.post("/sanPhamBanChayThangNay", shop.sanPhamBanChayThangNay)
+  app.post("/sanPhamBanChayTuDauNamDenNay", shop.sanPhamBanChayTuDauNamDenNay)
+  //=============
+  app.post("/thongKeTheoNgay", shop.thongKeTheoNgay)
+  app.post("/thongKeTheoThang", shop.thongKeTheoThang)
+  app.post("/thongKeTheoNam", shop.thongKeTheoNam)
+  app.post("/sanPhamBanChayHomNay", shop.sanPhamBanChayHomNay)
+  app.post("/sanPhamBanChayThangNay1", shop.sanPhamBanChayThangNay1)
+  app.post("/sanPhamBanChayNamNay", shop.sanPhamBanChayNamNay)
 }

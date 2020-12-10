@@ -1,4 +1,5 @@
 const { ObjectId } = require("mongodb");
+const { hoaDonChiTietShop, hoaDonChiTietUser } = require("../models");
 const db = require("../models");
 const Shop = db.shop;
 const SanPham = db.sanPham;
@@ -7,8 +8,8 @@ const User = db.user;
 const SanPhamYeuThich = db.sanPhamYeuThich;
 const SanPhamMuaSau = db.sanPhamMuaSau;
 const DonHang = db.donHang;
-const HoaDonUser = db.hoaDonUser;
-const HoaDonChiTietUser = db.hoaDonChiTietUser;
+const DonHangChiTiet = db.donHangChiTiet;
+
 
 exports.registerUser = (req, res) => {
   const user = new User({
@@ -50,19 +51,51 @@ exports.loginUser = async (req, res) => {
   })
 }
 
-exports.capNhatThongTinUser = (req,res)=>{
-  
+exports.capNhatThongTinUser = (req, res) => {
+  User.findOneAndUpdate({
+    _id: req.body.idUser
+  }, {
+    hoVaTen: req.body.hoVaTen,
+    soDienThoai: req.body.soDienThoai,
+    diaChi: req.body.diaChi
+  }, function (err, result) {
+    if (err) {
+      return res.status(400).json({
+        err: err
+      })
+
+    }
+    return res.status(200).json({
+      data: result
+    })
+  })
 }
 
-exports.chiTietSanPham = (req,res)=>{
-
-  SanPham.findOne({_id:req.body.idSanPham},function(err,result){
-    if(err){
+exports.doiMatKhau =(req,res)=>{
+  User.findOneAndUpdate({_id:req.body.idUser,password:req.body.password1},{
+    password: req.body.password2
+  },function(err,result){
+    if(result == null){
       return res.status(400).json({
-        msg:err
+        msg: "Mật khẩu cũ không đúng"
       })
     }
-    else{
+      return res.status(200).json({
+        msg: "Đã đổi mật khẩu"
+      })
+  })
+
+}
+
+exports.chiTietSanPham = (req, res) => {
+
+  SanPham.findOne({ _id: req.body.idSanPham }, function (err, result) {
+    if (err) {
+      return res.status(400).json({
+        msg: err
+      })
+    }
+    else {
       return res.status(200).json({
         sanPham: result
       })
@@ -146,13 +179,13 @@ exports.deleteSanPhamMuaSau = (req, res) => {
   SanPhamMuaSau.deleteOne({
     idUser: req.body.idUser,
     idSanPham: req.body.idSanPham
-  },function(err,result){
-    if(err){
+  }, function (err, result) {
+    if (err) {
       return res.status(400).json({
-        msg:err
+        msg: err
       })
-    }else{
-      return res.status(200).json({
+    } else {
+      return res.status(200).send({
         msg: result
       })
     }
@@ -160,6 +193,7 @@ exports.deleteSanPhamMuaSau = (req, res) => {
 }
 
 exports.themSanPhamVaoGioHang = async (req, res) => {
+  
   GioHang.findOne({
     idUser: req.body.idUser
   }).exec(function (err, result) {
@@ -167,13 +201,13 @@ exports.themSanPhamVaoGioHang = async (req, res) => {
       GioHang.updateOne({
         'idUser': req.body.idUser,
         'items.idSanPham': ObjectId(req.body.idSanPham)
-      }, { '$inc': { 'sanPham.$.soLuong': req.body.soLuong } }).exec(function (err1, result1) {
+      }, { '$inc': { 'items.$.soLuong': req.body.soLuongMua } }).exec(function (err1, result1) {
         if (result1.nModified == 0) {
           GioHang.update({
             'idUser': req.body.idUser,
           }, {
             '$push': {
-              'sanPham': { 'idSanPham': ObjectId(req.body.idSanPham), soLuong: 90 }
+              'items': { 'idSanPham': ObjectId(req.body.idSanPham), soLuongMua: req.body.soLuongMua }
             }
           }, function (err2, result2) {
             if (result2) {
@@ -191,10 +225,10 @@ exports.themSanPhamVaoGioHang = async (req, res) => {
 
     }
     else {
-      let sanPham = [{ idSanPham: req.body.idSanPham, soLuong: req.body.soLuong }]
+      let sanPham = [{ idSanPham: req.body.idSanPham, soLuongMua: req.body.soLuongMua }]
       const gioHang = new GioHang({
         idUser: req.body.idUser,
-        sanPham: sanPham
+        items: sanPham
       });
       gioHang.save(gioHang).then(
         data => {
@@ -209,16 +243,30 @@ exports.themSanPhamVaoGioHang = async (req, res) => {
   })
 }
 
-exports.xoaSanPhamTrongGioHang =(req,res)=>{
+exports.hienThanhSanPhamTheoNganhHang = (req, res) => {
+  SanPham.find({ nganhHang: req.body.nganhHang }, function (err, result) {
+    if (err) {
+      return res.status(400).json({
+        msg: err
+      })
+    } else {
+      return res.status(200).json({
+        msg: result
+      })
+    }
+  })
+}
+
+exports.xoaSanPhamTrongGioHang = (req, res) => {
   GioHang.update(
-    { idUser: req.body.idUser},
-    {$pull:{"items": {idSanPham:req.body.idSanPham}}},function(err,result){
-      if(err){
+    { idUser: req.body.idUser },
+    { $pull: { "items": { idSanPham: req.body.idSanPham } } }, function (err, result) {
+      if (err) {
         return res.status(400).json({
-          msg:"err"
+          msg: "err"
         })
       }
-      else{
+      else {
         return res.status(200).json({
           msg: result
         })
@@ -227,69 +275,158 @@ exports.xoaSanPhamTrongGioHang =(req,res)=>{
   )
 }
 
-exports.sanPhamTrongGioHang = (req, res) => {
-  GioHang.find({ idUser:req.body.idUser},(function (err, result) {
-    if (err){
-      return res.status(400).json({
-        msg:err
-      })
-    }
-    return res.status(200).json({
-      items: result
-    });
-  }));
+// exports.sanPhamTrongGioHang = async (req, res) => {
+//   GioHang.find({ idUser: req.body.idUser }).populate('items.idSanPham').populate('idUser').exec(function(err,result){
+//     if(result == null){
+//       return res.status(400).send("Không có sản phẩm nào")
+//     }
+//     return res.status(200).send(result)
+//   })
+// }
+exports.sanPhamTrongGioHang = async (req, res) => {
+  GioHang.aggregate([
+    
+  ])
 }
 
 exports.thanhToan = (req, res) => {
-  GioHang.findOne({ idUser: req.body.idUser }, function (err, result) {
+  GioHang.findOne({ idUser: req.body.idUser }).populate('items.idSanPham').exec(function (err, result) {
     if (err) {
       return res.status(400).json({
         msg: err
       })
     }
     else {
-      console.log("HoaDonUser")
-      const hoaDonUser = new HoaDonUser({
-      })
+ 
       var sanPham = [];
-      result.sanPham.map((value, index) => {
-        return sanPham.push({ idSanPham: value.idSanPham, soLuong: value.soLuong })
-      })
-      console.log(sanPham)
-      hoaDonUser.save(hoaDonUser).then(data => {
-        console.log("hoa don user save...")
-        const hoaDonChiTietUser = new HoaDonChiTietUser({
-          idHoaDon: result._id,
-          idUser: result.idUser,
-          sanPham: sanPham,
-          trangThai: "Đã tiếp nhận đơn hàng",
-        })
-        hoaDonChiTietUser.save(hoaDonChiTietUser).then(data => {
-          console.log("hoa don chi tiet save")
-          return res.status(200).json({
-            msg: data
-          })
-        }).catch(err => {
-          return res.status(400).json({
-            msg: "that bai ! save hoa don chi tiet "
-          })
-        })
-        //  return res.status(200).json({
-        //    msg: data
-        //  })
-      }).catch(err => {
-        return res.status(400).json({
-          msg: err
+      var tongTien = 0
+      result.items.map((value, index) => {
+        console.log("tongTien: " + (value.idSanPham.gia * value.soLuongMua + tongTien));
+        tongTien = value.idSanPham.gia * value.soLuongMua + tongTien;
+        return sanPham.push({
+          idSanPham: value.idSanPham,
+          soLuong: value.soLuong,
         })
       })
+      const donHang = new DonHang({
+        idUser:req.body.idUser,
+        tongTien:tongTien
+      })
+      
+      donHang.save(donHang).then(
+        data =>{
+          const donHangChiTiet = new DonHangChiTiet({
+            idHoaDon: data._id,
+            idUser:req.body.idUser,
+            sanPham:result.items,
+            tongTien:tongTien,
+            trangThai:"Đã tiếp nhận đơn hàng"
+          })
+          donHangChiTiet.save(donHangChiTiet).then(
+            data =>{
+              GioHang.deleteOne({idUser:req.body.idUser},function(err,result){
+                if(result){
+                  console.log(result)
+                }
+              })
+             return res.status(200).json({
+                msg:data
+              })
+            }
+          ).catch(err=>{
+            return res.status(400).json({
+              msg: err
+            })
+          })
+        }
+      )
+
     }
   })
 }
+
+// exports.thongKeTheoNam = async (req, res) => {
+//   await HoaDonChiTietShop.aggregate([
+//     {
+//       '$match': {
+//         "idShop": ObjectId(req.body.idShop),
+//         "ngayMuaHang": {
+//           '$gte': new Date(req.body.year + "-01-01"),
+//           '$lt': new Date(req.body.year + "-12-31")
+//         }
+//       }
+//     },
+
+//     {
+//       $group: {
+//         _id: {
+//           //  "date": "$date",
+//           "month": { "$month": { "$toDate": "$ngayMuaHang" } },
+//           "idShop": "$idShop"
+//         },
+//         count: { $sum: "$tongTien" }
+//       }
+//     }
+//   ], function (err, result) {
+//     if (err) {
+//       console.log(err)
+//       res.send({ err })
+//     } else {
+//       console.log(result)
+//       return res.send({
+//         data: result
+//       })
+//     }
+//   })
+// };
+
 exports.findDonHang = (req, res) => {
-  GioHang.findOne({ idUser: req.body.idUser }).populate('items.idSanPham').populate('items.idSanPham.idShop').then(data=>{
-    return res.status(200).json({
-      msg:data
-    })
+  GioHang.aggregate([
+    {
+      '$match': {
+        idUser: ObjectId(req.body.idUser),
+      }
+    },
+    {
+      $lookup: {
+        from: "SanPham",
+        localField: "items.idSanPham",
+        foreignField: "_id",
+        as: "san_pham",
+      }
+    },
+    {
+      $project: {
+        items: "$san_pham",
+      }
+    },
+    // {
+    //   $project:{
+    //     items:"$san_pham",
+    //   }
+    // },  
+    // {
+    //   $group:{
+    //     _id:"$items._id"
+    //   }
+    // }
+  ], function (err, result) {
+    if (err) {
+      return res.status(400).json({
+        msg: err
+      })
+    }
+    else {
+      let tongTien = 0;
+      result[0].items.map((value, index) => {
+        tongTien = value.gia * value.soLuong + tongTien
+      })
+      result.push({ "tongTien": tongTien })
+      return res.status(200).json(
+        {
+          msg: result,
+        })
+    }
   })
 }
 
@@ -301,171 +438,3 @@ exports.lienKet = (req, res) => {
     });
   });
 }
-// exports.registerUser = (req, res) => {
-
-//   const user = new User({
-//     // _id: req.body._id,
-//     ho_va_ten: req.body.ho_va_ten,
-//     email: req.body.email,
-//     sdt: req.body.sdt,
-//     password: req.body.password,
-//     ngay_sinh: req.body.ngay_sinh,
-//     dia_chi: req.body.dia_chi
-//   });
-
-//   user
-//     .save(user)
-//     .then(data => {
-//       res.status(200).send({
-//         data: data
-//       });
-//       console.log(data)
-//     })
-//     .catch(err => {
-//       res.status(500).send({
-//         message:
-//           err.message || "Some error occurred while creating the Tutorial."
-//       });
-//     });
-// }
-
-// exports.login = async (req, res) => {
-//   User.findOne({
-//     email: req.body.email, password: req.body.password
-//   }).exec(function (err, result) {
-//     if (err) {
-//       return res.status(400).send({
-//         data: "Email hoặc mật khẩu không chính xác"
-//       })
-//     }
-//     else if (result) {
-//       return res.status(200).send({ data: result });
-//     }
-//     else {
-//       return res.status(400).send({
-//         data: "Email hoặc mật khẩu không chính xác"
-//       })
-//     }
-//   })
-// }
-// // get data items theo nganh_hang
-// exports.getItemsNganhHang = async (req, res) => {
-//   SanPham.find({ nganh_hang: req.body.nganh_hang }).exec(function (err, result) {
-//     if (err) {
-//       return res.status(400).send({
-//         data: "Không tải được dữ liệu"
-//       })
-//     }
-//     if (result) {
-//       return res.status(200).send({
-//         data: result
-//       })
-//     }
-//   })
-// }
-// // get item chi tiet
-// exports.getItemChiTiet = async (req, res) => {
-//   SanPham.findOne({ _id: req.body.idSanPham }).exec(function (err, result) {
-//     if (err) {
-//       return res.status(400).send({
-//         data: "Không tìm thấy trang"
-//       })
-//     }
-//     else {
-//       return res.status(200).send({
-//         data: result
-//       })
-//     }
-//   })
-// }
-// // get items in cart
-
-// exports.getItemCart = async (req, res) => {
-//   await GioHang.find({ id_user: req.body.id_user }).exec(function (err, result) {
-//     if (err) {
-//       return res.status(400).send({
-//         data: "Lỗi tải dữ liệu"
-//       })
-//     } else {
-//       return res.status(200).send({
-//         data: result
-//       })
-//     }
-//   })
-// }
-// // thanh toan, delete items gio hang
-// exports.thanhToan = async (req, res) => {
-//   await GioHang.find({ id_user: req.body.id_user }, function (err, result) {
-//     if (err) {
-//       return res.status(400).send({
-//         data: "Không tìm thấy sản phẩm"
-//       })
-//     } else {
-//       result.map((item, index) => {
-//         const donHang = new DonHang({
-//           id_user: item.id_user,
-//           id_san_pham: item.id_san_pham,
-//           id_shop: item.id_shop,
-//           so_luong: item.so_luong,
-//           gia: item.gia,
-//           ten_san_pham: item.ten_san_pham,
-//           hinh_anh: item.hinh_anh,
-//         });
-//         donHang.save(donHang
-//         ).then(data => {
-//           //  res.send(data);
-//           console.log(data)
-//         })
-//           .catch(err => {
-//             //  res.status(500).send({
-//             //    message:
-//             //      err.message || "Some error occurred while creating the Tutorial."
-//             //  });
-//           });
-//       })
-
-//       // return res.status(200).send({
-//       //   data: result
-//       // })
-//     }
-//   })
-//   await GioHang.deleteMany({ id_user: req.body.id_user }, function (err, result) {
-//     if (err) {
-//       return res.status(400).send({
-//         data: "Không tìm thấy sản phẩm"
-//       })
-//     } else {
-//       return res.status(200).send({
-//         data: result
-//       })
-//     }
-//   })
-// }
-// // thanh toan, save items dat mua
-
-// //get info user
-// exports.getInfoUser = async (req, res) => {
-//   await User.findOne({ _id: req.body.id_user }, function (err, result) {
-//     if (err) {
-//       return res.status(400).send("Lỗi")
-//     } else {
-//       return res.status(200).send({
-//         data: result
-//       })
-//     }
-//   })
-// }
-// // getAllDonHang
-// exports.getAllDonHang = async (req,res)=>{
-//   await DonHang.find({id_user:req.body.id_user}).populate('id_user').exec(function(err,result){
-//     if(err){
-//       return res.status(400).send({
-//         data: err
-//       })
-//     }else{
-//       return res.status(200).send({
-//         data: result
-//       })
-//     }
-//   })
-// }
